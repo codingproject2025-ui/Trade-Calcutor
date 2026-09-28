@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RiskDesk – Trading Risk Management</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0c1015;--panel:#141a21;--line:#222b35;--tx:#e7ecf1;--mu:#8592a0;--ac:#5b9dff;--g:#34c38f;--a:#f0b429;--o:#ff8a4c;--r:#ef5b5b;--rad:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 'IBM Plex Sans',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#side{position:fixed;inset:0 auto 0 0;width:210px;background:var(--panel);border-right:1px solid var(--line);padding:20px 12px;z-index:5}
+.brand{font-weight:600;font-size:18px;padding:0 10px 20px}
+#side button{display:flex;gap:10px;width:100%;padding:10px 12px;margin-bottom:4px;background:none;border:0;border-radius:10px;color:var(--mu);cursor:pointer;text-align:left}
+#side button.on,#side button:hover{background:#1c2530;color:var(--tx)}
+#main{margin-left:210px}
+#top{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:4}
+#top h1{font-size:18px;margin:0;flex:1}
+main{padding:24px;max-width:1300px}
+section{display:none}section.on{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:18px;margin-bottom:18px}
+.panel h2{margin:0 0 12px;font-size:15px;font-weight:600}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:16px}
+.card small{color:var(--mu);display:block}.card b{font-size:24px;font-weight:600;display:block;margin:2px 0}.card em{font-style:normal;color:var(--mu);font-size:12px}
+.t-g{color:var(--g)}.t-a{color:var(--a)}.t-o{color:var(--o)}.t-r{color:var(--r)}
+.pill{padding:4px 12px;border-radius:99px;font-weight:600;font-size:12px;border:1px solid currentColor}
+.hero{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.hero h2{font-size:30px;margin:0;font-weight:600;letter-spacing:-.01em}
+.gauge{position:relative;height:16px;background:#0d1319;border-radius:99px;margin:16px 0 6px;border:1px solid var(--line);overflow:hidden}
+.gauge i{position:absolute;inset:0 auto 0 0;background:currentColor;border-radius:99px}
+.gauge u{position:absolute;top:0;bottom:0;width:1px;background:#4a5866}
+.scale{display:flex;justify-content:space-between;color:var(--mu);font-size:12px}
+#alert{display:none;margin-bottom:18px;padding:22px;border-radius:var(--rad);border:2px solid var(--o);background:rgba(255,138,76,.1)}
+#alert strong{font-size:24px;display:block}
+body.lim #alert,body.exc #alert{display:block}
+body.exc #alert{border-color:var(--r);background:rgba(239,91,91,.14)}
+body.lim #top{border-bottom-color:var(--o)}body.exc #top{border-bottom-color:var(--r);background:#1d1013}
+label{display:block;color:var(--mu);font-size:12px}
+input,select{width:100%;background:#0d1319;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:4px}
+input[readonly]{color:var(--mu)}
+.btn{width:auto;background:var(--ac);color:#06101f;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;margin:0}
+.btn.s{background:#1f2933;color:var(--tx);border:1px solid var(--line)}.btn.d{background:var(--r);color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.ch{position:relative;height:250px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{color:var(--mu);font-weight:500}
+td button{background:none;border:0;color:var(--ac);cursor:pointer;padding:2px 6px}td button.x{color:var(--r)}
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}.kv:last-child{border:0}
+#toast{position:fixed;bottom:80px;right:20px;background:#1f2933;border:1px solid var(--line);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+#toast.on{opacity:1}
+@media(max-width:860px){
+#side{inset:auto 0 0 0;width:auto;display:flex;padding:6px;border:0;border-top:1px solid var(--line)}
+.brand{display:none}#side button{flex-direction:column;align-items:center;gap:0;font-size:11px;padding:6px 2px;margin:0;text-align:center}
+#main{margin:0 0 70px}main{padding:14px}#top{padding:12px 14px}.hero h2{font-size:22px}.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside id="side"><div class="brand">◈ RiskDesk</div><nav id="nav"></nav></aside>
+<div id="main">
+<header id="top"><h1 id="ttl"></h1><span id="pill" class="pill"></span><button class="btn" id="bSave">Save Data</button></header>
+<main>
+
+<section data-v="dashboard">
+ <div class="panel" id="hero">
+  <div class="hero"><h2 id="stTxt"></h2><span class="pill" id="lvTxt"></span></div>
+  <div class="gauge" id="gauge"><i id="gBar"></i><u style="left:30%"></u><u style="left:70%"></u></div>
+  <div class="scale"><span>0%</span><span>30%</span><span id="useTxt"></span><span>70%</span><span>100%</span></div>
+ </div>
+ <div id="alert"><strong id="alTit"></strong><span id="alMsg"></span></div>
+ <div class="grid" id="cards" style="margin-bottom:18px"></div>
+ <div class="panel"><h2>Parameter utama</h2>
+  <div class="grid">
+   <label>Initial Capital ($)<input id="pCap" type="number" step="any"></label>
+   <label>Lot Size<input id="pLot" type="number" step="0.01"></label>
+   <label>Maximum Daily Loss ($)<input id="pMax" type="number" step="any"></label>
+   <label>Current Balance ($)<input id="pBal" type="number" step="any"></label>
+   <label>Risk per Day (%)<input id="pRisk" readonly></label>
+   <label>Total Profit<input id="pProf" readonly></label>
+   <label>Total Loss<input id="pLoss" readonly></label>
+  </div>
+  <p style="color:var(--mu);margin:12px 0 0">Saldo otomatis mengikuti jurnal setiap ada perubahan trade. Ubah manual untuk menimpanya.</p>
+ </div>
+ <div class="grid g2"><div class="panel"><h2>Equity curve</h2><div class="ch"><canvas id="cEq"></canvas></div></div>
+ <div class="panel"><h2>Daily P/L</h2><div class="ch"><canvas id="cDay"></canvas></div></div></div>
+ <div class="panel"><h2>Ringkasan risiko</h2><div id="riskList"></div></div>
+</section>
+
+<section data-v="journal">
+ <div class="panel"><h2 id="fTitle">Tambah trade</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+   <label>Date<input id="jDate" type="date"></label>
+   <label>Pair<input id="jPair" list="pairs" placeholder="EURUSD"></label>
+   <label>Buy/Sell<select id="jSide"><option>Buy</option><option>Sell</option></select></label>
+   <label>Lot<input id="jLot" type="number" step="0.01"></label>
+   <label>Entry<input id="jEntry" type="number" step="any"></label>
+   <label>Stop Loss<input id="jSl" type="number" step="any"></label>
+   <label>Take Profit<input id="jTp" type="number" step="any"></label>
+   <label>P/L ($)<input id="jPl" type="number" step="any"></label>
+  </div>
+  <datalist id="pairs"><option>EURUSD<option>GBPUSD<option>USDJPY<option>XAUUSD<option>AUDUSD<option>USDCAD</datalist>
+  <div class="row" style="margin-top:12px"><button class="btn" id="jAdd">Add Trade</button><button class="btn s" id="jCancel" hidden>Cancel</button></div>
+ </div>
+ <div class="panel"><h2>Filter</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+   <label>Dari tanggal<input id="fFrom" type="date"></label><label>Sampai tanggal<input id="fTo" type="date"></label>
+   <label>Pair<select id="fPair"></select></label>
+   <label>Hasil<select id="fRes"><option value="">Semua</option><option>Win</option><option>Loss</option></select></label>
+  </div>
+ </div>
+ <div class="grid" id="jStats" style="margin-bottom:18px"></div>
+ <div class="panel"><div class="tw"><table><thead><tr><th>Date</th><th>Pair</th><th>Buy/Sell</th><th>Lot</th><th>Entry</th><th>Stop Loss</th><th>Take Profit</th><th>P/L</th><th>Result</th><th></th></tr></thead><tbody id="jBody"></tbody></table></div></div>
+</section>
+
+<section data-v="calc">
+ <div class="grid g2">
+  <div class="panel"><h2>Lot &amp; stop loss calculator</h2>
+   <div class="grid" style="grid-template-columns:1fr 1fr">
+    <label>Account Balance ($)<input id="cBal" type="number" step="any"></label>
+    <label>Risk per Trade ($)<input id="cRisk" type="number" step="any"></label>
+    <label>Lot Size<input id="cLot" type="number" step="0.01"></label>
+    <label>Stop Loss (pips)<input id="cSl" type="number" step="any"></label>
+    <label>Pip Value ($ per pip, 1.00 lot)<input id="cPip" type="number" step="any"></label>
+   </div>
+  </div>
+  <div class="panel"><h2>Hasil</h2><div id="cOut"></div></div>
+ </div>
+</section>
+
+<section data-v="perf">
+ <div class="grid" id="pStats" style="margin-bottom:18px"></div>
+ <div class="grid g2"><div class="panel"><h2>Cumulative P/L</h2><div class="ch"><canvas id="cCum"></canvas></div></div>
+ <div class="panel"><h2>Win vs Loss</h2><div class="ch"><canvas id="cWL"></canvas></div></div></div>
+ <div class="panel"><h2>Drawdown (%)</h2><div class="ch"><canvas id="cDD"></canvas></div></div>
+</section>
+
+<section data-v="settings">
+ <div class="panel"><h2>Data</h2>
+  <div class="row"><button class="btn" id="sSave">Save Data</button><button class="btn s" id="sSync">Sinkron saldo dari jurnal</button><button class="btn s" id="sExp">Export CSV</button>
+  <button class="btn s" id="sImp">Import CSV</button><button class="btn d" id="sReset">Reset Data</button><input type="file" id="sFile" accept=".csv" hidden></div>
+  <p style="color:var(--mu)">Data tersimpan otomatis di browser (localStorage). Reset mengembalikan pengaturan awal beserta data contoh. Dashboard ini hanya untuk pemantauan; tidak mengirim order ke broker.</p>
+ </div>
+</section>
+
+</main></div>
+<div id="toast"></div>
+
+<script>
+/* ===== Util ===== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const KEY='riskdesk.v1';
+const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return iso(d)};
+const money=v=>(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct=v=>(isFinite(v)?v.toFixed(2):'0.00')+'%';
+const num=v=>parseFloat(v)||0;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const res=t=>t.pl>0?'Win':t.pl<0?'Loss':'BE';
+const tone=v=>v>0?'g':v<0?'r':'';
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ===== State & storage ===== */
+function sample(){
+ const r=[[9,'EURUSD','Buy',1.0850,1.0820,1.0910,6.2],[9,'GBPUSD','Sell',1.2710,1.2740,1.2650,-4.5],[8,'XAUUSD','Buy',2318.4,2312.4,2330.4,12.4],
+ [7,'EURUSD','Sell',1.0872,1.0900,1.0820,-8.1],[7,'USDJPY','Buy',151.20,150.90,151.80,5.3],[6,'GBPUSD','Buy',1.2690,1.2660,1.2750,-11],
+ [5,'XAUUSD','Sell',2331,2337,2320,9.8],[4,'EURUSD','Buy',1.0840,1.0815,1.0890,4.1],[3,'USDJPY','Sell',151.60,151.90,151.00,-6.7],
+ [3,'GBPUSD','Buy',1.2705,1.2680,1.2760,7.2],[2,'XAUUSD','Buy',2325,2319,2337,-15],[1,'EURUSD','Sell',1.0868,1.0895,1.0815,8.6],
+ [0,'XAUUSD','Buy',2322,2316,2334,-6],[0,'GBPUSD','Sell',1.2720,1.2750,1.2660,-3]];
+ return r.map((a,i)=>({id:i+1,date:ago(a[0]),pair:a[1],side:a[2],lot:.01,entry:a[3],sl:a[4],tp:a[5],pl:a[6]}));
+}
+function fresh(){const s={capital:1000,lot:.01,maxLoss:15,balance:1000,trades:sample()};s.balance=s.capital+s.trades.reduce((a,t)=>a+t.pl,0);return s}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&Array.isArray(j.trades))return j}catch(e){}return fresh()}
+function save(quiet){try{localStorage.setItem(KEY,JSON.stringify(S));if(!quiet)toast('Data tersimpan')}catch(e){toast('Penyimpanan browser tidak tersedia')}}
+let S=load(),editId=null,view='dashboard',charts={};
+const sync=()=>{S.balance=+(S.capital+S.trades.reduce((a,t)=>a+t.pl,0)).toFixed(2)};
+
+/* ===== Calculations ===== */
+function metrics(){
+ const ts=[...S.trades].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id);
+ let eq=S.capital,peak=eq,mdp=0,mdd=0,profit=0,loss=0,w=0,l=0;const eqS=[eq],ddS=[0],daily={};
+ ts.forEach(t=>{eq+=t.pl;peak=Math.max(peak,eq);const d=peak>0?(peak-eq)/peak*100:0;mdp=Math.max(mdp,d);mdd=Math.max(mdd,peak-eq);
+  eqS.push(eq);ddS.push(d);daily[t.date]=(daily[t.date]||0)+t.pl;if(t.pl>0){profit+=t.pl;w++}else if(t.pl<0){loss-=t.pl;l++}});
+ const days=Object.keys(daily).sort();let c=0;
+ const today=daily[iso(new Date())]||0,dl=Math.max(0,-today),ml=S.maxLoss,total=profit-loss;
+ return{ts,eqS,ddS,daily,days,cum:days.map(d=>c+=daily[d]),profit,loss,w,l,n:ts.length,total,eq:S.capital+total,
+  today,dl,ml,use:ml>0?dl/ml*100:0,rem:Math.max(0,ml-dl),dd:ddS[ddS.length-1],mdp,mdd,
+  wr:ts.length?w/ts.length*100:0,surv:ml>0?S.balance/ml:Infinity,riskPct:S.capital>0?ml/S.capital*100:0};
+}
+function status(m){
+ const e=1e-9;
+ if(m.dl>m.ml+e)return{k:'exc',t:'RISK LIMIT EXCEEDED',c:'r',msg:`Kerugian hari ini melebihi batas sebesar ${money(m.dl-m.ml)}. Hentikan trading dan evaluasi sebelum besok.`};
+ if(m.ml>0&&m.dl>=m.ml-e)return{k:'lim',t:'DAILY LIMIT REACHED',c:'o',msg:'Batas rugi harian tercapai. Sebaiknya jangan buka transaksi tambahan hari ini dan lanjutkan besok.'};
+ return{k:'ok',t:'TRADING ALLOWED',c:'g',msg:''};
+}
+const level=u=>u>100?['LIMIT EXCEEDED','r']:u>=70?['HIGH RISK','o']:u>=30?['MEDIUM RISK','a']:['LOW RISK','g'];
+
+/* ===== Render ===== */
+const card=(i,l,v,s,c)=>`<div class="card"><small>${i} ${l}</small><b class="t-${c||''}">${v}</b><em>${s||''}</em></div>`;
+function render(){
+ const m=metrics(),st=status(m),lv=level(m.use);
+ document.body.className=st.k;
+ $('#stTxt').textContent=st.t;$('#stTxt').className='t-'+st.c;
+ $('#lvTxt').textContent=lv[0];$('#lvTxt').className='pill t-'+lv[1];
+ $('#pill').textContent=st.t;$('#pill').className='pill t-'+st.c;
+ $('#gauge').className='gauge t-'+lv[1];$('#gBar').style.width=Math.min(m.use,100)+'%';
+ $('#useTxt').textContent=`Terpakai ${m.use.toFixed(0)}%`;
+ $('#alTit').textContent=st.t;$('#alMsg').textContent=st.msg;$('#alert').className='t-'+st.c;
+ $('#cards').innerHTML=[
+  card('💰','Account Balance',money(S.balance),'Saldo saat ini'),
+  card('📊','Equity',money(m.eq),'Modal + total P/L',tone(m.eq-S.capital)),
+  card('📈',"Today's P/L",money(m.today),'Hari ini',tone(m.today)),
+  card('🛑','Daily Loss Limit',money(m.ml),m.riskPct.toFixed(2)+'% dari modal awal'),
+  card('⚠️','Remaining Risk',money(m.rem),`${lv[0]} · ${m.use.toFixed(0)}% terpakai`,lv[1]),
+  card('📉','Drawdown',pct(m.dd),'Maks '+pct(m.mdp),m.dd>0?'a':''),
+  card('🎯','Win Rate',pct(m.wr),`${m.w} win / ${m.l} loss`),
+  card('📅','Estimated Survival',isFinite(m.surv)?m.surv.toFixed(2)+' Days':'∞',`Jika rugi ${money(m.ml)} tiap hari`)].join('');
+ [['pCap',S.capital],['pLot',S.lot],['pMax',S.maxLoss],['pBal',S.balance]].forEach(([id,v])=>{if(document.activeElement!==$('#'+id))$('#'+id).value=v});
+ $('#pRisk').value=pct(m.riskPct)+' (Max Loss / Capital)';$('#pProf').value=money(m.profit);$('#pLoss').value=money(-m.loss);
+ $('#riskList').innerHTML=[['Modal awal',money(S.capital)],['Saldo saat ini',money(S.balance)],['Equity',money(m.eq)],['Daily P/L',money(m.today)],
+  ['Maximum Daily Loss',money(m.ml)],['Remaining Daily Risk',money(m.rem)],['Risk Percentage',pct(m.riskPct)],['Drawdown / Maximum Drawdown',pct(m.dd)+' / '+pct(m.mdp)],
+  ['Hari bertahan (rugi maksimal tiap hari)',isFinite(m.surv)?m.surv.toFixed(2)+' hari':'∞']].map(r=>`<div class="kv"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('');
+ renderJournal();renderCalc(m);renderPerf(m);renderCharts(m);
+}
+function filtered(){
+ const f=$('#fFrom').value,t=$('#fTo').value,p=$('#fPair').value,r=$('#fRes').value;
+ return S.trades.filter(x=>(!f||x.date>=f)&&(!t||x.date<=t)&&(!p||x.pair===p)&&(!r||res(x)===r)).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:b.id-a.id);
+}
+function renderJournal(){
+ const ps=$('#fPair'),cur=ps.value,pairs=[...new Set(S.trades.map(x=>x.pair))].sort();
+ ps.innerHTML='<option value="">Semua pair</option>'+pairs.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');
+ const list=filtered(),w=list.filter(x=>x.pl>0).length,l=list.filter(x=>x.pl<0).length,tot=list.reduce((a,x)=>a+x.pl,0);
+ $('#jStats').innerHTML=[card('','Total trades',list.length),card('','Winning trades',w,'','g'),card('','Losing trades',l,'','r'),
+  card('','Win rate',pct(list.length?w/list.length*100:0)),card('','Total P/L',money(tot),'',tone(tot))].join('');
+ $('#jBody').innerHTML=list.length?list.map(x=>`<tr><td>${x.date}</td><td>${esc(x.pair)}</td><td>${x.side}</td><td>${x.lot}</td><td>${x.entry}</td><td>${x.sl}</td><td>${x.tp}</td>
+  <td class="t-${tone(x.pl)}">${money(x.pl)}</td><td class="t-${tone(x.pl)}">${res(x)}</td>
+  <td><button data-e="${x.id}">Edit</button><button class="x" data-d="${x.id}">Delete</button></td></tr>`).join('')
+  :'<tr><td colspan="10" style="color:var(--mu)">Belum ada trade. Isi form di atas lalu pilih Add Trade.</td></tr>';
+}
+function renderCalc(m){
+ const bal=num($('#cBal').value),risk=num($('#cRisk').value),lot=num($('#cLot').value),sl=num($('#cSl').value),pip=num($('#cPip').value);
+ const est=lot*sl*pip,recSl=lot*pip>0?risk/(lot*pip):0,over=est>m.rem+1e-9;
+ const rows=[['Maximum Risk',money(risk)],['Estimated Loss',money(est)],['Risk %',pct(bal>0?est/bal*100:0)],['Recommended Maximum SL',recSl.toFixed(1)+' pips'],['Remaining Daily Risk',money(m.rem)],
+  ['Batas rugi harian',`${money(S.maxLoss)} (${pct(bal>0?S.maxLoss/bal*100:0)} dari ${money(bal)})`]];
+ $('#cOut').innerHTML=rows.map(r=>`<div class="kv"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')+
+  (over?`<p class="t-r">Estimasi rugi melebihi sisa risiko harian. Perkecil lot atau stop loss.</p>`:est>risk+1e-9?`<p class="t-o">Estimasi rugi melebihi risiko per trade. Maksimal SL ${recSl.toFixed(1)} pips.</p>`:'');
+}
+function renderPerf(m){
+ const wins=m.ts.filter(t=>t.pl>0),los=m.ts.filter(t=>t.pl<0),pl=pcs=>pcs.length?pcs.reduce((a,t)=>a+t.pl,0)/pcs.length:0;
+ const pf=m.loss>0?(m.profit/m.loss).toFixed(2):(m.profit>0?'∞':'0.00');
+ $('#pStats').innerHTML=[card('','Total P/L',money(m.total),'',tone(m.total)),card('','Profit factor',pf),card('','Avg win',money(pl(wins)),'','g'),card('','Avg loss',money(pl(los)),'','r'),
+  card('','Best trade',money(Math.max(0,...m.ts.map(t=>t.pl))),'','g'),card('','Worst trade',money(Math.min(0,...m.ts.map(t=>t.pl))),'','r'),
+  card('','Max drawdown',pct(m.mdp),money(m.mdd),'a'),card('','Expectancy',money(m.n?m.total/m.n:0),'per trade')].join('');
+}
+/* ===== Charts ===== */
+function mk(id,type,data,opt){
+ const c=$('#'+id);if(!c||!window.Chart||!c.offsetParent)return;charts[id]&&charts[id].destroy();
+ charts[id]=new Chart(c,{type,data,options:Object.assign({responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:type==='doughnut'}},
+  scales:type==='doughnut'?{}:{x:{grid:{display:false}},y:{grid:{color:'#222b35'}}}},opt||{})});
+}
+function renderCharts(m){
+ if(!window.Chart)return;Chart.defaults.color='#8592a0';Chart.defaults.borderColor='#222b35';
+ const line=(lab,d,col,fill)=>({labels:lab,datasets:[{data:d,borderColor:col,backgroundColor:col+'26',fill,tension:.25,pointRadius:2,borderWidth:2}]});
+ if(view==='dashboard'){
+  mk('cEq','line',line(['Start',...m.ts.map(t=>t.date)],m.eqS,'#5b9dff',true));
+  mk('cDay','bar',{labels:m.days,datasets:[{data:m.days.map(d=>m.daily[d]),backgroundColor:m.days.map(d=>m.daily[d]>=0?'#34c38f':'#ef5b5b'),borderRadius:4}]});
+ }
+ if(view==='perf'){
+  mk('cCum','line',line(m.days,m.cum,'#5b9dff',true));
+  mk('cWL','doughnut',{labels:['Win','Loss'],datasets:[{data:[m.w,m.l],backgroundColor:['#34c38f','#ef5b5b'],borderWidth:0}]});
+  mk('cDD','line',line(['Start',...m.ts.map(t=>t.date)],m.ddS,'#ef5b5b',true));
+ }
+}
+/* ===== Navigation ===== */
+const VIEWS=[['dashboard','▦','Dashboard'],['journal','☰','Trading Journal'],['calc','∑','Risk Calculator'],['perf','↗','Performance'],['settings','⚙','Settings']];
+$('#nav').innerHTML=VIEWS.map(v=>`<button data-v="${v[0]}"><span>${v[1]}</span>${v[2]}</button>`).join('');
+function show(v){view=v;$$('section').forEach(s=>s.classList.toggle('on',s.dataset.v===v));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ $('#ttl').textContent=VIEWS.find(x=>x[0]===v)[2];render()}
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.v)};
+
+/* ===== Parameters ===== */
+Object.entries({pCap:'capital',pLot:'lot',pMax:'maxLoss',pBal:'balance'}).forEach(([id,k])=>$('#'+id).oninput=e=>{S[k]=num(e.target.value);save(true);render()});
+['fFrom','fTo','fPair','fRes'].forEach(id=>$('#'+id).onchange=renderJournal);
+$('#cBal').value=S.balance;$('#cRisk').value=S.maxLoss;$('#cLot').value=S.lot;$('#cSl').value=30;$('#cPip').value=10;
+['cBal','cRisk','cLot','cSl','cPip'].forEach(id=>$('#'+id).oninput=()=>renderCalc(metrics()));
+
+/* ===== Journal CRUD ===== */
+const F=['jDate','jPair','jSide','jLot','jEntry','jSl','jTp','jPl'];
+function clearForm(){editId=null;F.forEach(id=>$('#'+id).value='');$('#jDate').value=iso(new Date());$('#jLot').value=S.lot;$('#jSide').value='Buy';
+ $('#jAdd').textContent='Add Trade';$('#jCancel').hidden=true;$('#fTitle').textContent='Tambah trade'}
+$('#jAdd').onclick=()=>{
+ const t={date:$('#jDate').value,pair:$('#jPair').value.trim().toUpperCase(),side:$('#jSide').value,lot:num($('#jLot').value),entry:num($('#jEntry').value),sl:num($('#jSl').value),tp:num($('#jTp').value),pl:num($('#jPl').value)};
+ if(!t.date||!t.pair||t.lot<=0)return toast('Isi tanggal, pair, dan lot lebih dari 0');
+ if(editId){Object.assign(S.trades.find(x=>x.id===editId),t)}else{t.id=Math.max(0,...S.trades.map(x=>x.id))+1;S.trades.push(t)}
+ const was=editId;sync();save(true);clearForm();render();toast(was?'Trade diperbarui':'Trade ditambahkan');
+};
+$('#jCancel').onclick=clearForm;
+$('#jBody').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.e){const t=S.trades.find(x=>x.id==b.dataset.e);editId=t.id;
+  [t.date,t.pair,t.side,t.lot,t.entry,t.sl,t.tp,t.pl].forEach((v,i)=>$('#'+F[i]).value=v);
+  $('#jAdd').textContent='Update Trade';$('#jCancel').hidden=false;$('#fTitle').textContent='Edit trade';scrollTo({top:0,behavior:'smooth'})}
+ if(b.dataset.d&&confirm('Hapus trade ini?')){S.trades=S.trades.filter(x=>x.id!=b.dataset.d);sync();save(true);render();toast('Trade dihapus')}
+};
+
+/* ===== Data actions ===== */
+$('#bSave').onclick=$('#sSave').onclick=()=>save();
+$('#sSync').onclick=()=>{sync();save(true);render();toast('Saldo disinkronkan')};
+$('#sReset').onclick=()=>{if(confirm('Kembalikan semua pengaturan dan data contoh? Data Anda akan hilang.')){S=fresh();save(true);clearForm();render();toast('Data direset')}};
+$('#sExp').onclick=()=>{
+ const rows=['Date,Pair,Side,Lot,Entry,SL,TP,PL',...S.trades.map(t=>[t.date,t.pair,t.side,t.lot,t.entry,t.sl,t.tp,t.pl].join(','))];
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='trading-journal.csv';a.click();URL.revokeObjectURL(a.href);
+};
+$('#sImp').onclick=()=>$('#sFile').click();
+$('#sFile').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{
+  const out=[];r.result.split(/\r?\n/).forEach(line=>{const c=line.split(',').map(x=>x.trim());
+   if(/^\d{4}-\d{2}-\d{2}$/.test(c[0])&&c[1])out.push({id:out.length+1,date:c[0],pair:c[1].toUpperCase(),side:/^s/i.test(c[2])?'Sell':'Buy',lot:num(c[3]),entry:num(c[4]),sl:num(c[5]),tp:num(c[6]),pl:num(c[7])})});
+  if(!out.length)toast('CSV tidak valid. Kolom: Date(YYYY-MM-DD),Pair,Side,Lot,Entry,SL,TP,PL');
+  else if(confirm(`Ganti jurnal dengan ${out.length} trade dari CSV?`)){S.trades=out;sync();save(true);render();toast('Import berhasil')}
+  e.target.value='';
+ };r.readAsText(f);
+};
+
+clearForm();show('dashboard');
+window.addEventListener('resize',()=>renderCharts(metrics()));
+</script>
+</body>
+</html>
